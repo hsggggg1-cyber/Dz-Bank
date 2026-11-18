@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DZ Bac Bank | بنك تمارين البكالوريا الجزائرية</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    darkMode: 'class',
+    theme: { extend: { fontFamily: { sans: ['Cairo', 'system-ui', 'sans-serif'] } } }
+  };
+  // Apply saved theme before paint to avoid flashing
+  (function () {
+    try {
+      var t = localStorage.getItem('dzbac_theme');
+      if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark');
+      }
+    } catch (e) {}
+  })();
+</script>
+<style>
+  body { font-family: 'Cairo', system-ui, sans-serif; }
+  .sidebar { transition: transform .25s ease; }
+  @media (max-width: 1023px) {
+    .sidebar { position: fixed; top: 0; bottom: 0; inset-inline-start: 0; transform: translateX(100%); z-index: 40; }
+    .sidebar.open { transform: none; }
+  }
+  .modal-open { overflow: hidden; }
+  .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-thumb { background: #94a3b8aa; border-radius: 8px; }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { scrollbar-width: none; }
+</style>
+</head>
+<body class="bg-slate-50 text-slate-800 dark:bg-slate-900 dark:text-slate-100 min-h-screen antialiased">
+
+<!-- ============ HEADER ============ -->
+<header class="sticky top-0 z-30 bg-white/90 dark:bg-slate-900/90 backdrop-blur border-b border-slate-200 dark:border-slate-700">
+  <div class="max-w-7xl mx-auto px-3 sm:px-4 h-16 flex items-center gap-2 sm:gap-3">
+    <button id="menuBtn" class="lg:hidden p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800" aria-label="القائمة">
+      <span data-icon="menu"></span>
+    </button>
+    <div class="flex items-center gap-2 min-w-0">
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-700 text-white grid place-items-center font-extrabold shadow">DZ</div>
+      <div class="leading-tight min-w-0">
+        <h1 class="font-extrabold text-base sm:text-lg truncate">DZ Bac Bank</h1>
+        <p class="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 truncate">بنك تمارين البكالوريا الجزائرية</p>
+      </div>
+    </div>
+
+    <nav id="subjectTabsDesktop" class="hidden md:flex items-center gap-1 mx-auto bg-slate-100 dark:bg-slate-800 p-1 rounded-xl"></nav>
+
+    <div class="flex items-center gap-1 sm:gap-2 ms-auto">
+      <button id="addBtn" class="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold px-3 py-2 rounded-lg shadow">
+        <span data-icon="plus" data-class="w-4 h-4"></span><span class="hidden sm:inline">إضافة تمرين</span>
+      </button>
+      <button id="exportBtn" title="تصدير نسخة احتياطية (JSON)" class="flex items-center gap-1.5 p-2 sm:px-3 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-sm">
+        <span data-icon="download" data-class="w-4 h-4"></span><span class="hidden xl:inline">تصدير</span>
+      </button>
+      <button id="importBtn" title="استعادة من نسخة احتياطية (JSON)" class="flex items-center gap-1.5 p-2 sm:px-3 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-sm">
+        <span data-icon="upload" data-class="w-4 h-4"></span><span class="hidden xl:inline">استيراد</span>
+      </button>
+      <input id="importFile" type="file" accept="application/json,.json" class="hidden">
+      <button id="themeBtn" class="p-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800" aria-label="تبديل الوضع الليلي"></button>
+    </div>
+  </div>
+  <nav id="subjectTabsMobile" class="md:hidden flex gap-1 overflow-x-auto no-scrollbar px-3 pb-2"></nav>
+</header>
+
+<div class="max-w-7xl mx-auto flex">
+  <!-- ============ SIDEBAR ============ -->
+  <div id="backdrop" class="fixed inset-0 bg-black/50 z-30 hidden lg:hidden"></div>
+  <aside id="sidebar" class="sidebar w-72 shrink-0 bg-white dark:bg-slate-900 lg:bg-transparent lg:dark:bg-transparent border-e border-slate-200 dark:border-slate-700 lg:sticky lg:top-16 lg:self-start lg:h-[calc(100vh-4rem)] overflow-y-auto p-4">
+    <div class="flex items-center justify-between lg:hidden mb-3">
+      <span class="font-bold">الوحدات</span>
+      <button id="closeMenu" class="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800" aria-label="إغلاق"><span data-icon="x"></span></button>
+    </div>
+    <h2 id="sideTitle" class="text-sm font-bold text-emerald-700 dark:text-emerald-400 mb-3"></h2>
+    <ul id="unitList" class="space-y-1"></ul>
+  </aside>
+
+  <!-- ============ MAIN ============ -->
+  <main class="flex-1 min-w-0 p-3 sm:p-5">
+    <section class="space-y-3 mb-5">
+      <div class="flex flex-wrap gap-2" id="streamPills" role="tablist" aria-label="الشعب"></div>
+      <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
+        <label class="block">
+          <span class="text-xs text-slate-500 dark:text-slate-400">العرض</span>
+          <select id="viewSel" class="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+            <option value="all">كل التمارين</option>
+            <option value="bookmarked">للمراجعة ⭐</option>
+            <option value="solved">المحلولة ✅</option>
+            <option value="unsolved">غير المحلولة</option>
+          </select>
+        </label>
+        <label class="block col-span-2">
+          <span class="text-xs text-slate-500 dark:text-slate-400">بحث</span>
+          <input id="searchInp" type="search" placeholder="ابحث في عناوين التمارين والملاحظات…" class="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+        </label>
+      </div>
+      <div class="flex items-center justify-between text-sm text-slate-500 dark:text-slate-400">
+        <span id="crumb" class="font-semibold text-slate-700 dark:text-slate-200"></span>
+        <span id="countTxt"></span>
+      </div>
+    </section>
+
+    <section id="grid" class="grid sm:grid-cols-2 xl:grid-cols-3 gap-4"></section>
+  </main>
+</div>
+
+<!-- ============ ADMIN AUTH MODAL ============ -->
+<div id="authModal" class="fixed inset-0 z-50 hidden items-start justify-center p-4 pt-16 bg-black/60 overflow-y-auto">
+  <form id="authForm" class="w-full max-w-sm bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-6 space-y-4">
+    <div class="flex items-center gap-2 text-emerald-700 dark:text-emerald-400">
+      <span data-icon="lock"></span><h3 class="font-bold text-lg">صلاحية المشرف</h3>
+    </div>
+    <p class="text-sm text-slate-500 dark:text-slate-400">أدخل كلمة المرور للمتابعة.</p>
+    <input id="authPass" type="password" dir="ltr" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="كلمة المرور" class="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+    <label class="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400"><input id="authShow" type="checkbox"> إظهار كلمة المرور</label>
+    <p id="authErr" class="text-sm text-red-600 hidden">كلمة المرور غير صحيحة.</p>
+    <div class="flex gap-2 justify-end">
+      <button type="button" data-close="authModal" class="px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-sm">إلغاء</button>
+      <button id="authBtn" type="button" class="px-6 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold">دخول</button>
+    </div>
+  </form>
+</div>
+
+<!-- ============ ADD EXERCISE MODAL ============ -->
+<div id="formModal" class="fixed inset-0 z-50 hidden items-start sm:items-center justify-center p-3 bg-black/60 overflow-y-auto">
+  <form id="exForm" novalidate class="w-full max-w-2xl bg-white dark:bg-slate-800 rounded-2xl shadow-2xl my-4">
+    <div class="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-700">
+      <h3 class="font-bold text-lg">إضافة تمرين جديد</h3>
+      <button type="button" data-close="formModal" class="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700" aria-label="إغلاق"><span data-icon="x"></span></button>
+    </div>
+    <div class="p-4 space-y-4">
+      <label class="block">
+        <span class="text-sm font-semibold">عنوان التمرين *</span>
+        <input id="fTitle" required maxlength="160" class="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+      </label>
+      <div class="grid sm:grid-cols-2 gap-3">
+        <label class="block"><span class="text-sm font-semibold">المادة *</span>
+          <select id="fSubject" class="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2"></select></label>
+        <label class="block"><span class="text-sm font-semibold">الوحدة *</span>
+          <select id="fUnit" class="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2"></select></label>
+        <label class="block"><span class="text-sm font-semibold">الشعبة *</span>
+          <select id="fStream" class="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2"></select></label>
+      </div>
+      <label class="block">
+        <span class="text-sm font-semibold">رابط فيديو الشرح (اختياري)</span>
+        <input id="fVideo" type="url" dir="ltr" placeholder="https://youtube.com/…" class="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+      </label>
+      <label class="block">
+        <span class="text-sm font-semibold">ملاحظات (اختياري)</span>
+        <textarea id="fNotes" rows="2" maxlength="600" class="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500"></textarea>
+      </label>
+      <div id="fileBlocks" class="grid md:grid-cols-2 gap-3"></div>
+      <p class="text-xs text-slate-500 dark:text-slate-400">الملفات المرفوعة تُحفظ داخل المتصفح (حد أقصى 2.5 ميغابايت لكل ملف). للملفات الكبيرة استخدم رابطًا خارجيًا.</p>
+    </div>
+    <div class="sticky bottom-0 z-10 flex justify-end gap-2 p-4 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-b-2xl">
+      <button type="button" data-close="formModal" class="px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-sm">إلغاء</button>
+      <button id="saveBtn" type="button" class="px-6 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold">حفظ التمرين</button>
+    </div>
+  </form>
+</div>
+
+<!-- ============ PREVIEW MODAL ============ -->
+<div id="previewModal" class="fixed inset-0 z-50 hidden bg-black/70 p-0 sm:p-4">
+  <div class="w-full h-full max-w-6xl mx-auto bg-white dark:bg-slate-800 sm:rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+    <div class="flex items-start justify-between gap-3 p-3 sm:p-4 border-b border-slate-200 dark:border-slate-700">
+      <div class="min-w-0">
+        <h3 id="pvTitle" class="font-bold text-base sm:text-lg truncate"></h3>
+        <div id="pvMeta" class="flex flex-wrap gap-1.5 mt-1"></div>
+      </div>
+      <button data-close="previewModal" class="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 shrink-0" aria-label="إغلاق"><span data-icon="x"></span></button>
+    </div>
+    <div class="flex items-center gap-2 px-3 sm:px-4 pt-3">
+      <div class="inline-flex bg-slate-100 dark:bg-slate-900 p-1 rounded-xl">
+        <button id="tabSt" class="px-4 py-1.5 rounded-lg text-sm font-semibold">نص التمرين</button>
+        <button id="tabSo" class="px-4 py-1.5 rounded-lg text-sm font-semibold">الحل النموذجي</button>
+      </div>
+    </div>
+    <p id="pvNotes" class="px-3 sm:px-4 pt-2 text-sm text-slate-600 dark:text-slate-300 hidden"></p>
+    <div id="pvBody" class="flex-1 min-h-0 m-3 sm:m-4 rounded-xl bg-slate-100 dark:bg-slate-900 overflow-hidden grid place-items-center"></div>
+    <div class="flex flex-wrap items-center justify-end gap-2 px-3 sm:px-4 pb-3 sm:pb-4">
+      <a id="pvVideo" target="_blank" rel="noopener noreferrer" class="hidden items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-sm hover:bg-slate-100 dark:hover:bg-slate-700"></a>
+      <a id="pvOpen" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold"></a>
+    </div>
+  </div>
+</div>
+
+<!-- ============ TOAST ============ -->
+<div id="toast" class="fixed bottom-4 start-1/2 -translate-x-1/2 rtl:translate-x-1/2 z-[60] hidden max-w-[90vw] px-4 py-2.5 rounded-xl text-sm font-semibold shadow-lg"></div>
+
+<script>
+'use strict';
+/* =====================================================================
+   DZ Bac Bank — بنك تمارين البكالوريا الجزائرية
+   ===================================================================== */
+
+// ---------- Constants ----------
+const STORAGE_KEY = 'dzbac_exercises_v1';
+const THEME_KEY = 'dzbac_theme';
+const ADMIN_PASSWORD = 'ggbruh999';
+const MAX_FILE_BYTES = 2.5 * 1024 * 1024;
+
+const STREAMS = ['علوم تجريبية', 'رياضيات', 'تقني رياضي'];
+const MATH_ONLY = ['رياضيات'];
+const MATH_TECH = ['رياضيات', 'تقني رياضي'];
+
+// Units are listed in official order. `streams` restricts availability; omitted = all streams.
+const CURRICULUM = {
+  physics: {
+    name: 'العلوم الفيزيائية',
+    units: [
+      { id: 'ph1', name: 'المتابعة الزمنية لتحول كيميائي في وسط مائي' },
+      { id: 'ph2', name: 'تطور جملة كيميائية نحو حالة التوازن' },
+      { id: 'ph3', name: 'مراقبة تطور جملة كيميائية' },
+      { id: 'ph4', name: 'تطور جملة ميكانيكية' },
+      { id: 'ph5', name: 'الظواهر الكهربائية (ثنائي القطب RC وRL)' },
+      { id: 'ph6', name: 'الاهتزازات الحرة (الكهربائية والميكانيكية)' },
+      { id: 'ph7', name: 'الظواهر الموجية' },
+      { id: 'ph8', name: 'التحولات النووية' }
+    ]
+  },
+  math: {
+    name: 'الرياضيات',
+    units: [
+      { id: 'ma1', name: 'الأعداد والحساب', streams: MATH_TECH },
+      { id: 'ma2', name: 'المتتاليات العددية' },
+      { id: 'ma3', name: 'الدوال العددية والدوال الأسية واللوغاريتمية' },
+      { id: 'ma4', name: 'الحساب التكاملي (الدوال الأصلية والحساب التكاملي)' },
+      { id: 'ma5', name: 'الأعداد المركبة وتطبيقاتها الهندسية' },
+      { id: 'ma6', name: 'الاحتمالات' },
+      { id: 'ma7', name: 'الهندسة في الفضاء' },
+      { id: 'ma8', name: 'التحويلات النقطية في المستوي والفضاء', streams: MATH_ONLY }
+    ]
+  },
+  nature: {
+    name: 'علوم الطبيعة والحياة',
+    units: [
+      { id: 'na1', name: 'تركيب البروتين' },
+      { id: 'na2', name: 'العلاقة بين بنية ووظيفة البروتين' },
+      { id: 'na3', name: 'النشاط الأنزيمي للبروتين' },
+      { id: 'na4', name: 'الاتصال العصبي' },
+      { id: 'na5', name: 'المناعة والدفاع عن الذات' },
+      { id: 'na6', name: 'تكتونية الصفائح' }
+    ]
+  }
+};
+
+const unitStreams = u => u.streams || STREAMS;
+const findUnit = id => {
+  for (const k in CURRICULUM) { const u = CURRICULUM[k].units.find(x => x.id === id); if (u) return u; }
+  return null;
+};
+
+// ---------- Icons ----------
+const ICONS = {
+  sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+  moon: '<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>',
+  star: '<path d="M12 2l3.1 6.3 6.9 1-5 4.9 1.2 6.8L12 17.8 5.8 21l1.2-6.8-5-4.9 6.9-1z"/>',
+  check: '<path d="M20 6L9 17l-5-5"/>',
+  trash: '<path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/>',
+  eye: '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"/><circle cx="12" cy="12" r="3"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  download: '<path d="M12 3v12M7 10l5 5 5-5M4 21h16"/>',
+  upload: '<path d="M12 21V9M7 14l5-5 5 5M4 3h16"/>',
+  menu: '<path d="M3 6h18M3 12h18M3 18h18"/>',
+  x: '<path d="M18 6L6 18M6 6l12 12"/>',
+  ext: '<path d="M14 3h7v7M10 14L21 3M19 14v7H3V5h7"/>',
+  video: '<rect x="2" y="5" width="14" height="14" rx="2"/><path d="M22 8l-6 4 6 4z"/>',
+  lock: '<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
+  inbox: '<path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.5 5h13L22 12v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-6z"/>'
+};
+const icon = (n, c = 'w-5 h-5', fill = false) =>
+  `<svg class="${c}" viewBox="0 0 24 24" fill="${fill ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[n]}</svg>`;
+
+// ---------- Helpers ----------
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+const isHttp = u => { try { const x = new URL(u); return x.protocol === 'http:' || x.protocol === 'https:'; } catch { return false; } };
+
+let toastTimer;
+function toast(msg, type = 'ok') {
+  const t = $('#toast');
+  t.textContent = msg;
+  t.className = 'fixed bottom-4 start-1/2 -translate-x-1/2 rtl:translate-x-1/2 z-[60] max-w-[90vw] px-4 py-2.5 rounded-xl text-sm font-semibold shadow-lg ' +
+    (type === 'err' ? 'bg-red-600 text-white' : 'bg-slate-900 text-white dark:bg-emerald-600');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.add('hidden'), 3200);
+}
+
+// ---------- Storage ----------
+function loadDB() {
+  try {
+    const arr = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+    return Array.isArray(arr) ? arr : [];
+  } catch { return []; }
+}
+function saveDB() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(db)); return true; }
+  catch (e) { toast('تعذر الحفظ: مساحة التخزين ممتلئة. استخدم روابط خارجية بدل رفع الملفات.', 'err'); return false; }
+}
+let db = loadDB();
+
+// ---------- State ----------
+const state = { subject: 'physics', unit: 'all', stream: 'all', view: 'all', q: '' };
+let adminUnlocked = false;
+try { adminUnlocked = sessionStorage.getItem('dzbac_admin') === '1'; } catch {}
+
+// ---------- Theme ----------
+function renderThemeBtn() {
+  const dark = document.documentElement.classList.contains('dark');
+  $('#themeBtn').innerHTML = icon(dark ? 'sun' : 'moon');
+}
+$('#themeBtn').addEventListener('click', () => {
+  const root = document.documentElement;
+  root.classList.toggle('dark');
+  try { localStorage.setItem(THEME_KEY, root.classList.contains('dark') ? 'dark' : 'light'); } catch {}
+  renderThemeBtn();
+});
+
+// ---------- Filtering ----------
+function matches(ex, { ignoreUnit = false } = {}) {
+  if (ex.subject !== state.subject) return false;
+  if (!ignoreUnit && state.unit !== 'all' && ex.unit !== state.unit) return false;
+  if (state.stream !== 'all' && ex.stream !== state.stream) return false;
+  if (state.view === 'bookmarked' && !ex.bookmarked) return false;
+  if (state.view === 'solved' && !ex.solved) return false;
+  if (state.view === 'unsolved' && ex.solved) return false;
+  if (state.q) {
+    const hay = (ex.title + ' ' + (ex.notes || '')).toLowerCase();
+    if (!hay.includes(state.q.toLowerCase())) return false;
+  }
+  return true;
+}
+function visibleUnits() {
+  return CURRICULUM[state.subject].units.filter(u => state.stream === 'all' || unitStreams(u).includes(state.stream));
+}
+
+// ---------- Rendering ----------
+function renderSubjects() {
+  const html = Object.entries(CURRICULUM).map(([k, s]) => {
+    const active = k === state.subject;
+    return `<button data-subject="${k}" class="whitespace-nowrap px-4 py-1.5 rounded-lg text-sm font-semibold transition ${active
+      ? 'bg-white dark:bg-slate-700 text-emerald-700 dark:text-emerald-300 shadow'
+      : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-slate-700/60'}">${esc(s.name)}</button>`;
+  }).join('');
+  $('#subjectTabsDesktop').innerHTML = html;
+  $('#subjectTabsMobile').innerHTML = html.replaceAll('px-4 py-1.5', 'px-3 py-1.5 bg-slate-100 dark:bg-slate-800');
+}
+
+function renderSidebar() {
+  $('#sideTitle').textContent = 'وحدات ' + CURRICULUM[state.subject].name;
+  const units = visibleUnits();
+  const total = db.filter(e => matches(e, { ignoreUnit: true })).length;
+  const item = (id, label, count) => {
+    const active = state.unit === id;
+    return `<li><button data-unit="${id}" class="w-full text-start flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl text-sm transition ${active
+      ? 'bg-emerald-600 text-white font-semibold shadow'
+      : 'hover:bg-slate-100 dark:hover:bg-slate-800'}">
+      <span>${esc(label)}</span>
+      <span class="text-xs rounded-full px-2 py-0.5 ${active ? 'bg-white/25' : 'bg-slate-200 dark:bg-slate-700'}">${count}</span></button></li>`;
+  };
+  $('#unitList').innerHTML = item('all', 'جميع الوحدات', total) +
+    units.map((u, i) => item(u.id, `${i + 1}. ${u.name}`, db.filter(e => e.unit === u.id && matches(e, { ignoreUnit: true })).length)).join('');
+}
+
+function renderStreams() {
+  const opts = [['all', 'جميع الشعب'], ...STREAMS.map(s => [s, s])];
+  $('#streamPills').innerHTML = opts.map(([v, l]) => {
+    const active = state.stream === v;
+    return `<button role="tab" aria-selected="${active}" data-stream="${v}" class="px-4 py-1.5 rounded-full text-sm font-semibold border transition ${active
+      ? 'bg-emerald-600 border-emerald-600 text-white shadow'
+      : 'bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 hover:border-emerald-500'}">${l}</button>`;
+  }).join('');
+}
+
+function badge(text, cls) { return `<span class="text-[11px] px-2 py-0.5 rounded-full font-semibold ${cls}">${esc(text)}</span>`; }
+
+function renderGrid() {
+  const list = db.filter(e => matches(e)).sort((a, b) => b.createdAt - a.createdAt);
+  const unitName = state.unit === 'all' ? 'جميع الوحدات' : (findUnit(state.unit)?.name || '');
+  $('#crumb').textContent = `${CURRICULUM[state.subject].name} › ${unitName}`;
+  $('#countTxt').textContent = `${list.length} تمرين`;
+
+  if (!list.length) {
+    $('#grid').innerHTML = `<div class="col-span-full text-center py-16 text-slate-500 dark:text-slate-400">
+      <div class="mx-auto w-16 h-16 rounded-2xl bg-slate-200 dark:bg-slate-800 grid place-items-center mb-3">${icon('inbox', 'w-8 h-8')}</div>
+      <p class="font-bold text-lg">لا توجد تمارين هنا بعد</p>
+      <p class="text-sm mt-1">${db.length ? 'جرّب تغيير الفلاتر أو الوحدة.' : 'ابدأ بإضافة أول تمرين عبر زر «إضافة تمرين».'}</p></div>`;
+    return;
+  }
+
+  $('#grid').innerHTML = list.map(e => {
+    const u = findUnit(e.unit);
+    return `<article class="group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 flex flex-col gap-3 shadow-sm hover:shadow-md transition">
+      <h3 class="font-bold leading-snug line-clamp-2">${esc(e.title)}</h3>
+      <div class="flex flex-wrap gap-1.5">
+        ${badge(u ? u.name : '—', 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-200')}
+        ${badge(e.stream, 'bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-300')}
+        ${e.solved ? badge('محلول', 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300') : badge('غير محلول', 'bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-300')}
+        ${e.solution ? '' : badge('بدون حل', 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400')}
+      </div>
+      ${e.notes ? `<p class="text-sm text-slate-600 dark:text-slate-300 line-clamp-2">${esc(e.notes)}</p>` : ''}
+      <div class="mt-auto flex items-center gap-1.5 pt-1">
+        <button data-act="preview" data-id="${e.id}" class="flex-1 inline-flex items-center justify-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold py-2 rounded-lg">${icon('eye', 'w-4 h-4')} معاينة</button>
+        <button data-act="bookmark" data-id="${e.id}" title="للمراجعة" aria-pressed="${!!e.bookmarked}" class="p-2 rounded-lg border ${e.bookmarked ? 'border-amber-400 text-amber-500 bg-amber-50 dark:bg-amber-900/20' : 'border-slate-200 dark:border-slate-600 text-slate-500 hover:text-amber-500'}">${icon('star', 'w-4 h-4', !!e.bookmarked)}</button>
+        <button data-act="solved" data-id="${e.id}" title="تم الحل" aria-pressed="${!!e.solved}" class="p-2 rounded-lg border ${e.solved ? 'border-emerald-500 text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20' : 'border-slate-200 dark:border-slate-600 text-slate-500 hover:text-emerald-600'}">${icon('check', 'w-4 h-4')}</button>
+        <button data-act="delete" data-id="${e.id}" title="حذف" class="p-2 rounded-lg border border-slate-200 dark:border-slate-600 text-slate-500 hover:text-red-600 hover:border-red-400">${icon('trash', 'w-4 h-4')}</button>
+      </div>
+    </article>`;
+  }).join('');
+}
+
+function renderAll() { renderSubjects(); renderStreams(); renderSidebar(); renderGrid(); }
+
+// ---------- Navigation events ----------
+document.addEventListener('click', e => {
+  const sb = e.target.closest('[data-subject]');
+  if (sb) { state.subject = sb.dataset.subject; state.unit = 'all'; renderAll(); return; }
+  const ub = e.target.closest('[data-unit]');
+  if (ub) { state.unit = ub.dataset.unit; renderSidebar(); renderGrid(); closeMenu(); return; }
+  const st = e.target.closest('[data-stream]');
+  if (st) {
+    state.stream = st.dataset.stream;
+    if (state.unit !== 'all' && !visibleUnits().some(u => u.id === state.unit)) state.unit = 'all';
+    renderStreams(); renderSidebar(); renderGrid(); return;
+  }
+  const cl = e.target.closest('[data-close]');
+  if (cl) { closeModal(cl.dataset.close); return; }
+  const act = e.target.closest('[data-act]');
+  if (act) handleAction(act.dataset.act, act.dataset.id);
+});
+$('#viewSel').addEventListener('change', e => { state.view = e.target.value; renderSidebar(); renderGrid(); });
+$('#searchInp').addEventListener('input', e => { state.q = e.target.value.trim(); renderSidebar(); renderGrid(); });
+
+function openMenu() { $('#sidebar').classList.add('open'); $('#backdrop').classList.remove('hidden'); }
+function closeMenu() { $('#sidebar').classList.remove('open'); $('#backdrop').classList.add('hidden'); }
+$('#menuBtn').addEventListener('click', openMenu);
+$('#closeMenu').addEventListener('click', closeMenu);
+$('#backdrop').addEventListener('click', closeMenu);
+
+// ---------- Modals ----------
+function openModal(id) {
+  const m = $('#' + id);
+  m.classList.remove('hidden'); m.classList.add('flex');
+  document.body.classList.add('modal-open');
+}
+function closeModal(id) {
+  const m = $('#' + id);
+  m.classList.add('hidden'); m.classList.remove('flex');
+  if (id === 'previewModal') cleanupPreview();
+  if (id === 'authModal') pendingAuth = null;
+  if (!document.querySelector('[id$="Modal"].flex')) document.body.classList.remove('modal-open');
+}
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  for (const id of ['authModal', 'previewModal', 'formModal']) {
+    if ($('#' + id).classList.contains('flex')) { closeModal(id); break; }
+  }
+});
+['authModal', 'formModal', 'previewModal'].forEach(id => {
+  $('#' + id).addEventListener('mousedown', e => { if (e.target.id === id) closeModal(id); });
+});
+
+// ---------- Admin auth ----------
+let pendingAuth = null;
+$('#authShow').addEventListener('change', e => { $('#authPass').type = e.target.checked ? 'text' : 'password'; });
+function requireAdmin(cb) {
+  if (adminUnlocked) { cb(); return; }
+  pendingAuth = cb;
+  $('#authPass').value = '';
+  $('#authErr').classList.add('hidden');
+  openModal('authModal');
+  setTimeout(() => $('#authPass').focus(), 50);
+}
+function tryLogin() {
+  if ($('#authPass').value.trim().toLowerCase() === ADMIN_PASSWORD.toLowerCase()) {
+    adminUnlocked = true;
+    try { sessionStorage.setItem('dzbac_admin', '1'); } catch {}
+    const cb = pendingAuth;
+    closeModal('authModal');
+    if (cb) cb();
+  } else {
+    $('#authErr').classList.remove('hidden');
+    $('#authPass').select();
+  }
+}
+$('#authBtn').addEventListener('click', tryLogin);
+$('#authForm').addEventListener('submit', e => { e.preventDefault(); tryLogin(); });
+
+// ---------- Actions on cards ----------
+let pendingDelete = null, deleteTimer;
+function handleAction(act, id) {
+  const ex = db.find(x => x.id === id);
+  if (!ex) return;
+  if (act === 'preview') return openPreview(ex);
+  if (act === 'bookmark') { ex.bookmarked = !ex.bookmarked; saveDB(); renderSidebar(); renderGrid(); return; }
+  if (act === 'solved') { ex.solved = !ex.solved; saveDB(); renderSidebar(); renderGrid(); return; }
+  if (act === 'delete') {
+    requireAdmin(() => {
+      // Two-tap confirm (browser confirm() is blocked in sandboxed previews)
+      if (pendingDelete !== id) {
+        pendingDelete = id;
+        toast('اضغط زر الحذف مرة أخرى للتأكيد');
+        clearTimeout(deleteTimer);
+        deleteTimer = setTimeout(() => { pendingDelete = null; }, 4000);
+        return;
+      }
+      pendingDelete = null;
+      db = db.filter(x => x.id !== id);
+      saveDB(); renderAll(); toast('تم حذف التمرين');
+    });
+  }
+}
+
+// ---------- Add exercise form ----------
+function fileBlock(p, label) {
+  return `<fieldset class="rounded-xl border border-slate-200 dark:border-slate-700 p-3 space-y-2">
+    <legend class="px-1 text-sm font-semibold">${label}</legend>
+    <div class="flex gap-4 text-sm">
+      <label class="flex items-center gap-1.5"><input type="radio" name="${p}Mode" value="url" checked> رابط خارجي</label>
+      <label class="flex items-center gap-1.5"><input type="radio" name="${p}Mode" value="file"> رفع ملف</label>
+    </div>
+    <input id="${p}Url" type="url" dir="ltr" placeholder="https://…/file.pdf" class="w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+    <input id="${p}File" type="file" accept="application/pdf,image/*" class="hidden w-full text-sm file:me-3 file:rounded-lg file:border-0 file:bg-emerald-600 file:text-white file:px-3 file:py-1.5">
+  </fieldset>`;
+}
+$('#fileBlocks').innerHTML = fileBlock('st', 'نص التمرين (PDF / صورة) *') + fileBlock('so', 'الحل النموذجي (PDF / صورة)');
+$('#exForm').addEventListener('change', e => {
+  if (e.target.type === 'radio') {
+    const p = e.target.name.slice(0, 2), file = e.target.value === 'file';
+    $('#' + p + 'Url').classList.toggle('hidden', file);
+    $('#' + p + 'File').classList.toggle('hidden', !file);
+  }
+});
+
+function fillSelect(sel, items, selected) {
+  sel.innerHTML = items.map(([v, l]) => `<option value="${esc(v)}" ${v === selected ? 'selected' : ''}>${esc(l)}</option>`).join('');
+}
+function refreshFormUnits() {
+  const subj = $('#fSubject').value;
+  const prev = $('#fUnit').value;
+  const units = CURRICULUM[subj].units;
+  fillSelect($('#fUnit'), units.map(u => [u.id, u.name]), units.some(u => u.id === prev) ? prev : units[0].id);
+  refreshFormStreams();
+}
+function refreshFormStreams() {
+  const u = findUnit($('#fUnit').value);
+  const allowed = unitStreams(u);
+  const prev = $('#fStream').value;
+  fillSelect($('#fStream'), allowed.map(s => [s, s]), allowed.includes(prev) ? prev : allowed[0]);
+}
+$('#fSubject').addEventListener('change', refreshFormUnits);
+$('#fUnit').addEventListener('change', refreshFormStreams);
+
+function openForm() {
+  $('#exForm').reset();
+  ['st', 'so'].forEach(p => { $('#' + p + 'Url').classList.remove('hidden'); $('#' + p + 'File').classList.add('hidden'); });
+  fillSelect($('#fSubject'), Object.entries(CURRICULUM).map(([k, s]) => [k, s.name]), state.subject);
+  refreshFormUnits();
+  if (state.unit !== 'all') { $('#fUnit').value = state.unit; refreshFormStreams(); }
+  if (state.stream !== 'all') {
+    const ok = [...$('#fStream').options].some(o => o.value === state.stream);
+    if (ok) $('#fStream').value = state.stream;
+  }
+  openModal('formModal');
+  setTimeout(() => $('#fTitle').focus(), 50);
+}
+$('#addBtn').addEventListener('click', () => requireAdmin(openForm));
+
+const readAsDataURL = f => new Promise((res, rej) => {
+  const r = new FileReader();
+  r.onload = () => res(r.result);
+  r.onerror = () => rej(r.error);
+  r.readAsDataURL(f);
+});
+
+async function collectFile(p, required, label) {
+  const mode = document.querySelector(`input[name="${p}Mode"]:checked`).value;
+  if (mode === 'url') {
+    const url = $('#' + p + 'Url').value.trim();
+    if (!url) { if (required) throw new Error(`${label} مطلوب (رابط أو ملف).`); return null; }
+    if (!isHttp(url)) throw new Error(`رابط ${label} غير صالح.`);
+    return { kind: 'url', url };
+  }
+  const f = $('#' + p + 'File').files[0];
+  if (!f) { if (required) throw new Error(`${label} مطلوب (رابط أو ملف).`); return null; }
+  if (!(f.type === 'application/pdf' || f.type.startsWith('image/'))) throw new Error(`${label}: يُقبل PDF أو صورة فقط.`);
+  if (f.size > MAX_FILE_BYTES) throw new Error(`${label}: حجم الملف يتجاوز 2.5 ميغابايت.`);
+  return { kind: 'data', data: await readAsDataURL(f), name: f.name, mime: f.type };
+}
+
+let saving = false;
+async function submitForm() {
+  if (saving) return;
+  saving = true;
+  try {
+    if (!$('#fTitle').value.trim()) { $('#fTitle').focus(); throw new Error('أدخل عنوان التمرين.'); }
+    const video = $('#fVideo').value.trim();
+    if (video && !isHttp(video)) throw new Error('رابط الفيديو غير صالح.');
+    const unit = findUnit($('#fUnit').value);
+    const stream = $('#fStream').value;
+    if (!unitStreams(unit).includes(stream)) throw new Error('هذه الوحدة غير متاحة لهذه الشعبة.');
+    const statement = await collectFile('st', true, 'نص التمرين');
+    const solution = await collectFile('so', false, 'الحل النموذجي');
+    db.unshift({
+      id: uid(), title: $('#fTitle').value.trim(), subject: $('#fSubject').value, unit: unit.id,
+      stream, video: video || '', notes: $('#fNotes').value.trim(),
+      statement, solution, bookmarked: false, solved: false, createdAt: Date.now()
+    });
+    if (!saveDB()) { db.shift(); return; }
+    closeModal('formModal');
+    renderAll();
+    toast('تمت إضافة التمرين ✓');
+  } catch (err) { toast(err.message || 'حدث خطأ.', 'err'); }
+  finally { saving = false; }
+}
+$('#saveBtn').addEventListener('click', submitForm);
+$('#exForm').addEventListener('submit', e => { e.preventDefault(); submitForm(); });
+
+// ---------- Preview ----------
+let pvEx = null, pvTab = 'st', pvBlobs = [];
+function dataURLToBlob(d) {
+  const [h, b] = d.split(',');
+  const mime = (h.match(/:(.*?);/) || [])[1] || 'application/octet-stream';
+  const bin = atob(b), arr = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+  return new Blob([arr], { type: mime });
+}
+function resolveFile(ref) {
+  if (!ref) return null;
+  if (ref.kind === 'data') {
+    const url = URL.createObjectURL(dataURLToBlob(ref.data));
+    pvBlobs.push(url);
+    return { url, image: ref.mime.startsWith('image/'), name: ref.name };
+  }
+  let url = ref.url;
+  const drive = url.match(/drive\.google\.com\/file\/d\/([^/?#]+)/);
+  if (drive) url = `https://drive.google.com/file/d/${drive[1]}/preview`;
+  let path = ''; try { path = new URL(url).pathname.toLowerCase(); } catch {}
+  return { url, image: /\.(png|jpe?g|gif|webp|bmp|svg|avif)$/.test(path), name: ref.url };
+}
+function cleanupPreview() { pvBlobs.forEach(u => URL.revokeObjectURL(u)); pvBlobs = []; pvEx = null; $('#pvBody').innerHTML = ''; }
+
+function openPreview(ex) {
+  pvEx = ex; pvTab = 'st';
+  const u = findUnit(ex.unit);
+  $('#pvTitle').textContent = ex.title;
+  $('#pvMeta').innerHTML = badge(CURRICULUM[ex.subject].name, 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300') +
+    badge(u ? u.name : '—', 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-200') +
+    badge(ex.stream, 'bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-300');
+  const n = $('#pvNotes'); n.textContent = ex.notes || ''; n.classList.toggle('hidden', !ex.notes);
+  const v = $('#pvVideo');
+  if (ex.video) { v.href = ex.video; v.innerHTML = icon('video', 'w-4 h-4') + ' فيديو الشرح'; v.classList.remove('hidden'); v.classList.add('inline-flex'); }
+  else { v.classList.add('hidden'); v.classList.remove('inline-flex'); }
+  openModal('previewModal');
+  showTab('st');
+}
+function showTab(tab) {
+  if (!pvEx) return;
+  pvTab = tab;
+  const act = 'bg-white dark:bg-slate-700 text-emerald-700 dark:text-emerald-300 shadow';
+  const off = 'text-slate-600 dark:text-slate-300';
+  $('#tabSt').className = 'px-4 py-1.5 rounded-lg text-sm font-semibold ' + (tab === 'st' ? act : off);
+  $('#tabSo').className = 'px-4 py-1.5 rounded-lg text-sm font-semibold ' + (tab === 'so' ? act : off);
+  pvBlobs.forEach(u => URL.revokeObjectURL(u)); pvBlobs = [];
+  const f = resolveFile(tab === 'st' ? pvEx.statement : pvEx.solution);
+  const body = $('#pvBody'), open = $('#pvOpen');
+  if (!f) {
+    body.innerHTML = `<div class="text-center text-slate-500 dark:text-slate-400 p-6">${icon('inbox', 'w-10 h-10 mx-auto mb-2')}<p class="font-semibold">لا يوجد حل نموذجي لهذا التمرين بعد.</p></div>`;
+    open.classList.add('hidden'); return;
+  }
+  open.classList.remove('hidden');
+  open.href = f.url;
+  open.innerHTML = icon('ext', 'w-4 h-4') + ' فتح في نافذة جديدة';
+  body.className = 'flex-1 min-h-0 m-3 sm:m-4 rounded-xl bg-slate-100 dark:bg-slate-900 overflow-auto ' + (f.image ? 'grid place-items-center' : '');
+  body.innerHTML = f.image
+    ? `<img src="${esc(f.url)}" alt="${esc(pvEx.title)}" class="max-w-full max-h-full object-contain">`
+    : `<iframe src="${esc(f.url)}" title="${esc(pvEx.title)}" class="w-full h-full min-h-[60vh] border-0 bg-white"></iframe>`;
+}
+$('#tabSt').addEventListener('click', () => showTab('st'));
+$('#tabSo').addEventListener('click', () => showTab('so'));
+
+// ---------- Backup / Restore ----------
+$('#exportBtn').addEventListener('click', () => {
+  const payload = { app: 'DZ Bac Bank', version: 1, exportedAt: new Date().toISOString(), exercises: db };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `dz-bac-bank-backup-${new Date().toISOString().slice(0, 10)}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  toast(`تم تصدير ${db.length} تمرين`);
+});
+$('#importBtn').addEventListener('click', () => requireAdmin(() => $('#importFile').click()));
+$('#importFile').addEventListener('change', async e => {
+  const f = e.target.files[0]; e.target.value = '';
+  if (!f) return;
+  try {
+    const data = JSON.parse(await f.text());
+    const arr = Array.isArray(data) ? data : data.exercises;
+    if (!Array.isArray(arr)) throw new Error('صيغة الملف غير صالحة.');
+    const ids = new Set(db.map(x => x.id));
+    let added = 0, skipped = 0;
+    for (const x of arr) {
+      const u = x && findUnit(x.unit);
+      const ok = x && typeof x.title === 'string' && CURRICULUM[x.subject] && u &&
+        CURRICULUM[x.subject].units.includes(u) && unitStreams(u).includes(x.stream) &&
+        x.statement;
+      if (!ok) { skipped++; continue; }
+      if (ids.has(x.id)) { skipped++; continue; }
+      db.push({
+        id: x.id || uid(), title: x.title, subject: x.subject, unit: x.unit, stream: x.stream,
+        video: isHttp(x.video) ? x.video : '', notes: String(x.notes || ''), statement: x.statement,
+        solution: x.solution || null, bookmarked: !!x.bookmarked, solved: !!x.solved, createdAt: x.createdAt || Date.now()
+      });
+      ids.add(x.id); added++;
+    }
+    if (!saveDB()) { toast('فشل الحفظ بعد الاستيراد.', 'err'); return; }
+    renderAll();
+    toast(`تم استيراد ${added} تمرين` + (skipped ? ` (تخطي ${skipped})` : ''));
+  } catch (err) { toast(err.message || 'تعذر قراءة الملف.', 'err'); }
+});
+
+// ---------- Init ----------
+document.querySelectorAll('[data-icon]').forEach(el => { el.innerHTML = icon(el.dataset.icon, el.dataset.class || 'w-5 h-5'); });
+renderThemeBtn();
+renderAll();
+</script>
+</body>
+</html>
